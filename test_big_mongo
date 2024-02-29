@@ -1,0 +1,79 @@
+db = db.getSiblingDB('testbig');
+	
+var job_id = 1;
+var documentNumber = 1000000;
+var batchNumber = 5 * 1000;
+
+function randomName() {
+return (Math.random()+1).toString(36).substring(2);
+}
+
+function randomDate(start, end) {
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+}
+
+function time(command) {
+    const t1 = new Date();
+    const result = command();
+    const t2 = new Date();
+    print("temps elapsed " + (t2 - t1)/1000.0 + "s");
+    return result; 
+}
+
+var job_id = 1;
+var documentNumber = 1000000;
+var batchNumber = 5 * 1000;
+var start = new Date();
+var batchDocuments = new Array();
+
+var index = 0;
+while(index < documentNumber) {
+    var num = index
+    var newdate = randomDate(new Date(2012, 0, 1), new Date());
+    var nom = randomName();
+    var document = {   
+        num : num,    
+        newdate : newdate,
+        nom : nom
+    };
+    batchDocuments[index % batchNumber] = document;
+    if((index + 1) % batchNumber == 0) {
+        db.stresstab.insertMany(batchDocuments);
+    }
+    index++;
+    if(index % 100000 == 0) {   
+        print('-> inserted ' + index + ' documents.');
+    }
+}
+print('-->  inserted ' + documentNumber + ' in ' + (new Date() - start)/1000.0 + 's');
+
+
+
+time(() =>db.stresstab.createIndex(
+  {
+      num: 1
+  },
+  {
+      unique: true,
+      sparse: true
+  }
+))
+
+time(() => db.stresstab.createIndex(
+  {
+      nom: 1
+  },
+  {
+      sparse: true
+  }
+))
+
+time(() => db.stresstab.createIndex(
+  {
+      newdate: 1
+  },
+  {
+      sparse: true
+  }
+))
+
